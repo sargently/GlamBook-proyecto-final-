@@ -35,10 +35,10 @@ namespace GlamBook.DAL
                 // Por cada fila creo un objeto Clienta y lo agrego a la lista
                 lista.Add(new Clienta(
                     id: (int)reader["ClientaID"],
-                    nombre: reader["Nombre"].ToString(),
-                    apellido: reader["Apellido"].ToString(),
-                    telefono: reader["Telefono"].ToString(),
-                    correo: reader["Correo"].ToString(),
+                    nombre: reader["Nombre"]?.ToString() ?? string.Empty,
+                    apellido: reader["Apellido"]?.ToString() ?? string.Empty,
+                    telefono: reader["Telefono"]?.ToString() ?? string.Empty,
+                    correo: reader["Correo"]?.ToString() ?? string.Empty,
                     fechaRegistro: (DateTime)reader["FechaRegistro"]
                 ));
             }
@@ -62,7 +62,7 @@ namespace GlamBook.DAL
             cmd.Parameters.AddWithValue("@Correo", clienta.Correo);
 
             // ExecuteScalar devuelve el ID generado por SCOPE_IDENTITY()
-            return (int)(decimal)cmd.ExecuteScalar();
+            return Convert.ToInt32(cmd.ExecuteScalar());
         }
 
         // Elimina una clienta de la base de datos por su ID
@@ -74,6 +74,22 @@ namespace GlamBook.DAL
             using var cmd = new SqlCommand("sp_EliminarClienta", conn);
             cmd.CommandType = System.Data.CommandType.StoredProcedure;
             cmd.Parameters.AddWithValue("@ClientaID", clientaID);
+            cmd.ExecuteNonQuery();
+        }
+
+        // Actualiza los datos de una clienta existente en la base de datos
+        public void Actualizar(Clienta clienta)
+        {
+            using var conn = new SqlConnection(_connectionString);
+            conn.Open();
+
+            using var cmd = new SqlCommand("sp_ActualizarClienta", conn);
+            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@ClientaID", clienta.ClientaID);
+            cmd.Parameters.AddWithValue("@Nombre", clienta.Nombre);
+            cmd.Parameters.AddWithValue("@Apellido", clienta.Apellido);
+            cmd.Parameters.AddWithValue("@Telefono", clienta.Telefono);
+            cmd.Parameters.AddWithValue("@Correo", clienta.Correo);
             cmd.ExecuteNonQuery();
         }
     }

@@ -1,4 +1,6 @@
-﻿namespace GlamBook.Entities
+﻿using System.Text.RegularExpressions;
+
+namespace GlamBook.Entities
 {
     // Clienta hereda de Persona, o sea que ya tiene Nombre, Apellido y Telefono.
     // Aquí solo agregamos lo que es específico de una clienta del salón.
@@ -7,8 +9,22 @@
         // ID que viene de la base de datos
         public int ClientaID { get; set; }
 
-        // Correo electrónico de la clienta
-        public string Correo { get; set; }
+        // Variable privada para proteger el correo
+        private string _correo = null!;
+
+        // Correo electrónico: debe tener formato válido (algo@algo.algo)
+        public string Correo
+        {
+            get => _correo;
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                    throw new ArgumentException("El correo no puede estar vacío.");
+                if (!Regex.IsMatch(value.Trim(), @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                    throw new ArgumentException("El correo no tiene un formato válido.");
+                _correo = value.Trim();
+            }
+        }
 
         // Fecha en que se registró en el sistema (se guarda automáticamente)
         public DateTime FechaRegistro { get; private set; }
