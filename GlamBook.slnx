@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="GlamBook.BLL/GlamBook.BLL.csproj" />
+  <Project Path="GlamBook.DAL/GlamBook.DAL.csproj" />
+  <Project Path="GlamBook.Entities/GlamBook.Entities.csproj" />
+  <Project Path="GlamBook.UI/GlamBook.UI.csproj" />
+</Solution>
