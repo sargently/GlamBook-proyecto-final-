@@ -6,9 +6,9 @@
     public abstract class Persona
     {
         // Guardo los valores en variables privadas para protegerlos
-        private string _nombre;
-        private string _apellido;
-        private string _telefono;
+        private string _nombre = null!;
+        private string _apellido = null!;
+        private string _telefono = null!;
 
         // Nombre: no puede estar vacío
         public string Nombre
