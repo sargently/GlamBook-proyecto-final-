@@ -10,7 +10,7 @@ using var httpClient = new HttpClient
     BaseAddress = new Uri(apiBaseUrl)
 };
 
-Console.WriteLine($"Consumiento API en: {httpClient.BaseAddress}");
+Console.WriteLine($"Consumiendo API en: {httpClient.BaseAddress}");
 
 try
 {
@@ -19,7 +19,7 @@ try
 
     var nuevaClienta = new CrearClientaRequest(
         "Ana",
-        $"Perez-{DateTime.Now:HHmmss}",
+        "PerezTest",
         "8091234567",
         "ana@email.com");
 
@@ -74,14 +74,3 @@ static async Task ListarClientasAsync(HttpClient httpClient)
     }
 }
 
-public record CrearClientaRequest(string Nombre, string Apellido, string Telefono, string Correo);
-
-public class ClientaDto
-{
-    public int ClientaID { get; set; }
-    public string Nombre { get; set; } = string.Empty;
-    public string Apellido { get; set; } = string.Empty;
-    public string Telefono { get; set; } = string.Empty;
-    public string Correo { get; set; } = string.Empty;
-    public DateTime FechaRegistro { get; set; }
-}

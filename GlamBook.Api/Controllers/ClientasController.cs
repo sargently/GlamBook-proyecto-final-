@@ -9,42 +9,84 @@ namespace GlamBook.Api.Controllers;
 public class ClientasController : ControllerBase
 {
     private readonly ClientaDAL _clientaDal;
+    private readonly ILogger<ClientasController> _logger;
 
-    public ClientasController(ClientaDAL clientaDal)
+    public ClientasController(ClientaDAL clientaDal, ILogger<ClientasController> logger)
     {
         _clientaDal = clientaDal;
+        _logger = logger;
     }
 
     [HttpGet]
-    public ActionResult<IEnumerable<Clienta>> Get()
+    public ActionResult<IEnumerable<ClientaDto>> Get()
     {
-        var clientas = _clientaDal.ObtenerTodas();
-        return Ok(clientas);
+        try
+        {
+            var clientas = _clientaDal
+                .ObtenerTodas()
+                .Select(c => new ClientaDto(c.ClientaID, c.Nombre, c.Apellido, c.Telefono, c.Correo, c.FechaRegistro))
+                .ToList();
+
+            return Ok(clientas);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener clientas.");
+            return Problem(title: "No se pudo obtener la lista de clientas.", statusCode: StatusCodes.Status500InternalServerError);
+        }
     }
 
     [HttpPost]
-    public ActionResult<Clienta> Post([FromBody] CrearClientaRequest request)
+    public ActionResult<ClientaDto> Post([FromBody] CrearClientaRequest request)
     {
-        var clienta = new Clienta(request.Nombre, request.Apellido, request.Telefono, request.Correo);
-        var id = _clientaDal.Guardar(clienta);
+        if (string.IsNullOrWhiteSpace(request.Nombre) ||
+            string.IsNullOrWhiteSpace(request.Apellido) ||
+            string.IsNullOrWhiteSpace(request.Telefono) ||
+            string.IsNullOrWhiteSpace(request.Correo))
+        {
+            return BadRequest("Nombre, Apellido, Telefono y Correo son obligatorios.");
+        }
 
-        var created = new Clienta(
-            id,
-            clienta.Nombre,
-            clienta.Apellido,
-            clienta.Telefono,
-            clienta.Correo,
-            clienta.FechaRegistro);
+        try
+        {
+            var clienta = new Clienta(request.Nombre, request.Apellido, request.Telefono, request.Correo);
+            var id = _clientaDal.Guardar(clienta);
 
-        return Created($"/api/clientas/{id}", created);
+            var created = new ClientaDto(
+                id,
+                clienta.Nombre,
+                clienta.Apellido,
+                clienta.Telefono,
+                clienta.Correo,
+                clienta.FechaRegistro);
+
+            return Created($"/api/clientas/{id}", created);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al crear clienta.");
+            return Problem(title: "No se pudo crear la clienta.", statusCode: StatusCodes.Status500InternalServerError);
+        }
     }
 
     [HttpDelete("{id:int}")]
     public IActionResult Delete(int id)
     {
-        _clientaDal.Eliminar(id);
-        return NoContent();
+        try
+        {
+            var deleted = _clientaDal.Eliminar(id);
+
+            if (!deleted)
+            {
+                return NotFound($"No existe una clienta con ID {id}.");
+            }
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al eliminar clienta con ID {ClientaId}.", id);
+            return Problem(title: "No se pudo eliminar la clienta.", statusCode: StatusCodes.Status500InternalServerError);
+        }
     }
 }
-
-public record CrearClientaRequest(string Nombre, string Apellido, string Telefono, string Correo);

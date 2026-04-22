@@ -35,17 +35,17 @@ La API **no** hardcodea la conexión; la toma desde `ConnectionStrings:GlamBookD
 3. Ejecute la API:
 
 ```bash
-dotnet run --project /home/runner/work/GlamBook-proyecto-final-/GlamBook-proyecto-final-/GlamBook.Api
+dotnet run --project GlamBook.Api/GlamBook.Api.csproj
 ```
 
 4. En otra terminal, ejecute la consola cliente (usa por defecto `http://localhost:5137`):
 
 ```bash
-dotnet run --project /home/runner/work/GlamBook-proyecto-final-/GlamBook-proyecto-final-/GlamBook.UI
+dotnet run --project GlamBook.UI/GlamBook.UI.csproj
 ```
 
 También puede indicar otra URL de API:
 
 ```bash
-dotnet run --project /home/runner/work/GlamBook-proyecto-final-/GlamBook-proyecto-final-/GlamBook.UI -- http://localhost:5137
+dotnet run --project GlamBook.UI/GlamBook.UI.csproj -- http://localhost:5137
 ```

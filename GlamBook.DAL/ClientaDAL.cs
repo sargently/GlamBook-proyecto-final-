@@ -66,7 +66,7 @@ namespace GlamBook.DAL
         }
 
         // Elimina una clienta de la base de datos por su ID
-        public void Eliminar(int clientaID)
+        public bool Eliminar(int clientaID)
         {
             using var conn = new SqlConnection(_connectionString);
             conn.Open();
@@ -74,7 +74,8 @@ namespace GlamBook.DAL
             using var cmd = new SqlCommand("sp_EliminarClienta", conn);
             cmd.CommandType = System.Data.CommandType.StoredProcedure;
             cmd.Parameters.AddWithValue("@ClientaID", clientaID);
-            cmd.ExecuteNonQuery();
+
+            return cmd.ExecuteNonQuery() > 0;
         }
     }
 }
