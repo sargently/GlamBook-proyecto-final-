@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -8,8 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GlamBook.BLL\GlamBook.BLL.csproj" />
-    <ProjectReference Include="..\GlamBook.DAL\GlamBook.DAL.csproj" />
     <ProjectReference Include="..\GlamBook.Entities\GlamBook.Entities.csproj" />
   </ItemGroup>
 

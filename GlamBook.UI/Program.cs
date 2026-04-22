@@ -1,84 +1,87 @@
-﻿using GlamBook.DAL;
+using System.Net.Http.Json;
 using GlamBook.Entities;
-using GlamBook.BLL;
 
-// Cadena de conexión a mi base de datos local
-string connectionString = "Data Source=Gaby;Initial Catalog=GlamBookDB;Integrated Security=True;TrustServerCertificate=True;";
+var apiBaseUrl = args.FirstOrDefault()
+    ?? Environment.GetEnvironmentVariable("GLAMBOOK_API_BASEURL")
+    ?? "http://localhost:5137";
 
-// Creo las instancias de las capas que voy a usar
-var bll = new CitaBLL();
-var clientaDAL = new ClientaDAL(connectionString);
-
-// ----------------------------
-// DATOS DE PRUEBA
-// ----------------------------
-
-// Creo una clienta nueva
-var clienta = new Clienta("Ana", "Perez", "8091234567", "ana@email.com")
+using var httpClient = new HttpClient
 {
-    ClientaID = 1
+    BaseAddress = new Uri(apiBaseUrl)
 };
 
-// Creo un servicio de maquillaje estándar
-var servicioMaquillaje = new ServicioMaquillaje(
-    "Maquillaje Social",
-    "Maquillaje sencillo para eventos",
-    2000m,
-    60,
-    "Natural"
-);
+Console.WriteLine($"Consumiento API en: {httpClient.BaseAddress}");
 
-// Creo un servicio de novia con prueba incluida
-var servicioNovia = new ServicioNovias(
-    "Paquete Novia Premium",
-    "Maquillaje completo con sesión de prueba",
-    8500m,
-    180,
-    "Premium",
-    incluyePrueba: true
-);
-
-// ----------------------------
-// DEMO: AGENDAR CITA
-// ----------------------------
-Console.WriteLine("=== CITA AGENDADA ===");
-var cita = bll.AgendarCita(clienta, servicioMaquillaje, DateTime.Now.AddHours(2));
-Console.WriteLine(cita);
-
-// ----------------------------
-// DEMO: LISTAR CITAS
-// ----------------------------
-Console.WriteLine("\n=== LISTA DE CITAS ===");
-foreach (var c in bll.ObtenerTodas())
+try
 {
-    Console.WriteLine(c);
+    Console.WriteLine("\n=== CLIENTAS ACTUALES (GET /api/clientas) ===");
+    await ListarClientasAsync(httpClient);
+
+    var nuevaClienta = new CrearClientaRequest(
+        "Ana",
+        $"Perez-{DateTime.Now:HHmmss}",
+        "8091234567",
+        "ana@email.com");
+
+    Console.WriteLine("\n=== CREAR CLIENTA (POST /api/clientas) ===");
+    var postResponse = await httpClient.PostAsJsonAsync("/api/clientas", nuevaClienta);
+    postResponse.EnsureSuccessStatusCode();
+
+    var clientaCreada = await postResponse.Content.ReadFromJsonAsync<ClientaDto>();
+    Console.WriteLine($"Clienta creada con ID: {clientaCreada?.ClientaID}");
+
+    Console.WriteLine("\n=== CLIENTAS DESPUÉS DE CREAR ===");
+    await ListarClientasAsync(httpClient);
+
+    if (clientaCreada is not null)
+    {
+        Console.WriteLine($"\n=== ELIMINAR CLIENTA (DELETE /api/clientas/{clientaCreada.ClientaID}) ===");
+        var deleteResponse = await httpClient.DeleteAsync($"/api/clientas/{clientaCreada.ClientaID}");
+        deleteResponse.EnsureSuccessStatusCode();
+        Console.WriteLine("Clienta eliminada correctamente.");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Error consumiendo API: {ex.Message}");
 }
 
-// ----------------------------
-// DEMO: SOBRECARGA DE Calcular()
-// ----------------------------
-Console.WriteLine("\n=== SOBRECARGA: Calcular() ===");
-Console.WriteLine($"Servicio  : {servicioNovia.Nombre}");
-Console.WriteLine($"Sin descuento : RD$ {servicioNovia.Calcular():N2}");
-Console.WriteLine($"Con 10% desc. : RD$ {servicioNovia.Calcular(10):N2}");
-Console.WriteLine($"Con 25% desc. : RD$ {servicioNovia.Calcular(25):N2}");
+Console.WriteLine("\n=== POLIMORFISMO (DEMO POO) ===");
+List<ServicioBase> servicios =
+[
+    new ServicioMaquillaje("Maquillaje Social", "Evento", 2000m, 60, "Natural"),
+    new ServicioNovias("Paquete Novia Premium", "Con prueba", 8500m, 180, "Premium", incluyePrueba: true)
+];
 
-// ----------------------------
-// DEMO: POLIMORFISMO
-// ----------------------------
-Console.WriteLine("\n=== POLIMORFISMO ===");
-
-// Esta lista puede guardar cualquier tipo de servicio
-// porque todos heredan de ServicioBase
-List<ServicioBase> servicios = new()
+foreach (var servicio in servicios)
 {
-    servicioMaquillaje,
-    servicioNovia,
-    new ServicioMaquillaje("Maquillaje Artístico", "Fantasía y teatro", 3500m, 120, "Artístico")
-};
+    Console.WriteLine($"[{servicio.GetType().Name}] {servicio.Nombre} -> RD$ {servicio.Calcular():N2}");
+}
 
-foreach (ServicioBase s in servicios)
+static async Task ListarClientasAsync(HttpClient httpClient)
 {
-    // Calcular() se comporta diferente según el tipo real del objeto
-    Console.WriteLine($"[{s.GetType().Name}] {s.Nombre} → RD$ {s.Calcular():N2}");
+    var clientas = await httpClient.GetFromJsonAsync<List<ClientaDto>>("/api/clientas") ?? [];
+
+    if (clientas.Count == 0)
+    {
+        Console.WriteLine("No hay clientas registradas.");
+        return;
+    }
+
+    foreach (var c in clientas)
+    {
+        Console.WriteLine($"#{c.ClientaID}: {c.Nombre} {c.Apellido} | {c.Telefono} | {c.Correo}");
+    }
+}
+
+public record CrearClientaRequest(string Nombre, string Apellido, string Telefono, string Correo);
+
+public class ClientaDto
+{
+    public int ClientaID { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+    public string Apellido { get; set; } = string.Empty;
+    public string Telefono { get; set; } = string.Empty;
+    public string Correo { get; set; } = string.Empty;
+    public DateTime FechaRegistro { get; set; }
 }
